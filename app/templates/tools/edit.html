@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ tool.name }} — Dowel{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Edit Tool</h2>
+  <a href="{{ url_for('tools.detail', tool_id=tool.id) }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i> Back
+  </a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('tools.edit', tool_id=tool.id) }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Tool Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control" value="{{ tool.name }}" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Brand</label>
+          <input type="text" name="brand" class="form-control" value="{{ tool.brand or '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Model #</label>
+          <input type="text" name="model_number" class="form-control" value="{{ tool.model_number or '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Serial #</label>
+          <input type="text" name="serial_number" class="form-control" value="{{ tool.serial_number or '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Category</label>
+          <select name="category_id" class="form-select">
+            <option value="">— Select —</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if tool.category_id == cat.id %}selected{% endif %}>
+              {{ cat.icon }} {{ cat.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Condition</label>
+          <select name="condition" class="form-select">
+            {% for cond in ['excellent','good','fair','poor'] %}
+            <option value="{{ cond }}" {% if tool.condition == cond %}selected{% endif %}>{{ cond|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Year Purchased</label>
+          <input type="number" name="year_purchased" class="form-control" value="{{ tool.year_purchased or '' }}" min="1900" max="2099">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">Description</label>
+          <textarea name="description" class="form-control" rows="3">{{ tool.description or '' }}</textarea>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-semibold">Retailer / Product URL</label>
+          <input type="url" name="retailer_url" class="form-control" value="{{ tool.retailer_url or '' }}">
+        </div>
+
+        <!-- Specs -->
+        <div class="col-12">
+          <label class="form-label fw-semibold">Specs</label>
+          <div id="specsContainer">
+            {% if tool.specs %}
+              {% for k, v in tool.specs.items() %}
+              <div class="row g-2 mb-2 spec-row">
+                <div class="col-5"><input type="text" name="spec_key" class="form-control form-control-sm" placeholder="Key" value="{{ k }}"></div>
+                <div class="col-5"><input type="text" name="spec_val" class="form-control form-control-sm" placeholder="Value" value="{{ v }}"></div>
+                <div class="col-2"><button type="button" class="btn btn-outline-danger btn-sm remove-spec"><i class="bi bi-x"></i></button></div>
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm mt-1" id="addSpecBtn">
+            <i class="bi bi-plus"></i> Add Spec
+          </button>
+        </div>
+
+        <!-- Image -->
+        <div class="col-12">
+          <label class="form-label fw-semibold">Replace Image</label>
+          {% if tool.image_filename %}
+          <div class="mb-2">
+            <img src="{{ url_for('static', filename='uploads/' + tool.image_filename) }}"
+                 alt="current" class="rounded" style="height:80px;object-fit:cover">
+            <span class="text-muted small ms-2">Current image</span>
+          </div>
+          {% endif %}
+          <input type="file" name="image" class="form-control" accept="image/*">
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-save"></i> Save Changes
+        </button>
+        <a href="{{ url_for('tools.detail', tool_id=tool.id) }}" class="btn btn-outline-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

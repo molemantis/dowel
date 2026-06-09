@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Checkout History — Dowel{% endblock %}
+{% block content %}
+
+<h2 class="mb-4">Checkout History</h2>
+
+{% if checkouts %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Tool</th>
+        <th>Borrower</th>
+        <th>Checked Out</th>
+        <th>Due</th>
+        <th>Returned</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for co in checkouts %}
+      <tr>
+        <td>
+          <a href="{{ url_for('tools.detail', tool_id=co.tool.id) }}" class="fw-semibold text-decoration-none">
+            {{ co.tool.name }}
+          </a>
+        </td>
+        <td>
+          {{ co.borrower_name }}
+          {% if co.borrower_email %}
+          <br><a href="mailto:{{ co.borrower_email }}" class="text-muted small">{{ co.borrower_email }}</a>
+          {% endif %}
+        </td>
+        <td>{{ co.checked_out_at.strftime('%b %d, %Y') }}</td>
+        <td>{{ co.due_at.strftime('%b %d, %Y') }}</td>
+        <td>{{ co.returned_at.strftime('%b %d, %Y') if co.returned_at else '—' }}</td>
+        <td>
+          {% if co.returned_at %}
+            <span class="badge bg-success">Returned</span>
+          {% else %}
+            <span class="badge bg-warning text-dark countdown-badge" data-due-at="{{ co.due_at.isoformat() }}">Active</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-center py-5">
+  <p class="fs-1">📋</p>
+  <h4 class="text-muted">No checkouts yet.</h4>
+  <a href="{{ url_for('tools.index') }}" class="btn btn-primary mt-2">Go to My Inventory</a>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,72 @@
+/* Dowel custom styles */
+
+body {
+  background-color: #f8f9fa;
+}
+
+/* Tool card thumbnails */
+.tool-thumb {
+  height: 200px;
+  object-fit: cover;
+}
+
+.tool-thumb-placeholder {
+  height: 200px;
+}
+
+.tool-card-inner {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  cursor: pointer;
+}
+
+.tool-card-inner:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  transform: translateY(-2px);
+}
+
+/* Countdown badges */
+.countdown-badge {
+  font-size: 0.75rem;
+}
+
+.countdown-overdue {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+/* Navbar brand */
+.navbar-brand {
+  font-size: 1.3rem;
+  letter-spacing: -0.5px;
+}
+
+/* Category pills */
+#categoryPills .btn {
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+/* Spec rows */
+.spec-row input {
+  font-size: 0.875rem;
+}
+
+/* Alert checkout section */
+#checkoutAlert.overdue {
+  background-color: #f8d7da;
+  border-color: #f5c2c7;
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid #dee2e6;
+}
+
+/* Public inventory page header */
+.public-header {
+  background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}

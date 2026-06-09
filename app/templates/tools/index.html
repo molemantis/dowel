@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}My Inventory — Dowel{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">My Inventory
+    <span class="badge bg-secondary fs-6 ms-2">{{ tools|length }}</span>
+  </h2>
+  <a href="{{ url_for('tools.add') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg"></i> Add Tool
+  </a>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-2">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search tools…">
+      </div>
+      <div class="col-md-5">
+        <div class="d-flex flex-wrap gap-1" id="categoryPills">
+          <button class="btn btn-sm btn-dark active" data-category="all">All</button>
+          {% for cat in categories %}
+          <button class="btn btn-sm btn-outline-secondary" data-category="{{ cat.id }}">
+            {{ cat.icon }} {{ cat.name }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="btn-group w-100" role="group" id="availabilityFilter">
+          <button type="button" class="btn btn-sm btn-outline-secondary active" data-avail="all">All</button>
+          <button type="button" class="btn btn-sm btn-outline-success" data-avail="available">Available</button>
+          <button type="button" class="btn btn-sm btn-outline-warning" data-avail="checkedout">Checked Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if tools %}
+<div class="row g-3" id="toolGrid">
+  {% for tool in tools %}
+  {% set checkout = tool.active_checkout %}
+  <div class="col-md-4 tool-card"
+       data-name="{{ tool.name|lower }} {{ (tool.brand or '')|lower }}"
+       data-category="{{ tool.category_id or '' }}"
+       data-available="{{ 'true' if tool.is_available else 'false' }}">
+    <div class="card h-100 shadow-sm tool-card-inner">
+      <a href="{{ url_for('tools.detail', tool_id=tool.id) }}" class="text-decoration-none text-dark">
+        {% if tool.image_filename %}
+        <img src="{{ url_for('static', filename='uploads/' + tool.image_filename) }}"
+             class="card-img-top tool-thumb" alt="{{ tool.name }}">
+        {% else %}
+        <div class="tool-thumb-placeholder d-flex align-items-center justify-content-center bg-light">
+          <span style="font-size:3rem">🔧</span>
+        </div>
+        {% endif %}
+      </a>
+      <div class="card-body pb-2">
+        <h6 class="card-title mb-1">
+          <a href="{{ url_for('tools.detail', tool_id=tool.id) }}" class="text-decoration-none text-dark fw-bold">
+            {{ tool.name }}
+          </a>
+        </h6>
+        {% if tool.brand or tool.model_number %}
+        <p class="text-muted small mb-1">{{ tool.brand }}{% if tool.brand and tool.model_number %} · {% endif %}{{ tool.model_number }}</p>
+        {% endif %}
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+          {% if tool.category %}
+          <span class="badge bg-secondary">{{ tool.category.icon }} {{ tool.category.name }}</span>
+          {% endif %}
+          {% if tool.is_available %}
+          <span class="badge bg-success">Available</span>
+          {% else %}
+          {% set now_ts = "" %}
+          <span class="badge bg-warning text-dark countdown-badge"
+                data-due-at="{{ checkout.due_at.isoformat() }}">
+            Loading…
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<p class="text-muted mt-3 small" id="noResults" style="display:none">No tools match your filter.</p>
+{% else %}
+<div class="text-center py-5">
+  <p class="fs-1">🔧</p>
+  <h4 class="text-muted">No tools yet!</h4>
+  <a href="{{ url_for('tools.add') }}" class="btn btn-primary mt-2">Add your first tool</a>
+</div>
+{% endif %}
+
+{% endblock %}

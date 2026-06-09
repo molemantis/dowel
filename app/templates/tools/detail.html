@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}{{ tool.name }} — Dowel{% endblock %}
+{% block content %}
+
+<div class="mb-3">
+  <a href="{{ url_for('tools.index') }}" class="text-decoration-none text-muted">
+    <i class="bi bi-arrow-left"></i> My Inventory
+  </a>
+</div>
+
+<div class="row g-4">
+  <!-- Left: Image -->
+  <div class="col-md-4">
+    {% if tool.image_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + tool.image_filename) }}"
+         class="img-fluid rounded shadow" alt="{{ tool.name }}">
+    {% else %}
+    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height:280px">
+      <span style="font-size:5rem">🔧</span>
+    </div>
+    {% endif %}
+
+    <div class="mt-3 d-flex gap-2">
+      <a href="{{ url_for('tools.edit', tool_id=tool.id) }}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-pencil"></i> Edit
+      </a>
+      <form method="POST" action="{{ url_for('tools.delete', tool_id=tool.id) }}"
+            onsubmit="return confirm('Delete this tool?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-trash"></i> Delete
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Right: Info -->
+  <div class="col-md-8">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-2">
+      <h2 class="mb-0">{{ tool.name }}</h2>
+      {% if tool.category %}
+      <span class="badge bg-secondary fs-6">{{ tool.category.icon }} {{ tool.category.name }}</span>
+      {% endif %}
+    </div>
+
+    {% if tool.brand or tool.model_number %}
+    <p class="text-muted mb-2">
+      {% if tool.brand %}<strong>{{ tool.brand }}</strong>{% endif %}
+      {% if tool.brand and tool.model_number %} · {% endif %}
+      {% if tool.model_number %}Model: {{ tool.model_number }}{% endif %}
+    </p>
+    {% endif %}
+
+    <table class="table table-sm table-borderless w-auto mb-3">
+      {% if tool.serial_number %}
+      <tr><th class="text-muted fw-normal pe-3">Serial #</th><td>{{ tool.serial_number }}</td></tr>
+      {% endif %}
+      {% if tool.year_purchased %}
+      <tr><th class="text-muted fw-normal pe-3">Year Purchased</th><td>{{ tool.year_purchased }}</td></tr>
+      {% endif %}
+      <tr><th class="text-muted fw-normal pe-3">Condition</th>
+        <td>
+          {% set cond_colors = {'excellent': 'success', 'good': 'primary', 'fair': 'warning', 'poor': 'danger'} %}
+          <span class="badge bg-{{ cond_colors.get(tool.condition, 'secondary') }}">{{ tool.condition|title }}</span>
+        </td>
+      </tr>
+      {% if tool.retailer_url %}
+      <tr><th class="text-muted fw-normal pe-3">Product Link</th>
+        <td><a href="{{ tool.retailer_url }}" target="_blank" class="small">View on {{ tool.source|title if tool.source else 'retailer' }} <i class="bi bi-box-arrow-up-right"></i></a></td>
+      </tr>
+      {% endif %}
+    </table>
+
+    {% if tool.description %}
+    <p>{{ tool.description }}</p>
+    {% endif %}
+
+    {% if tool.specs %}
+    <h6 class="fw-semibold">Specs</h6>
+    <table class="table table-sm table-striped w-auto">
+      {% for k, v in tool.specs.items() %}
+      <tr><th class="fw-normal text-muted">{{ k }}</th><td>{{ v }}</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    <!-- Status section -->
+    <div class="mt-3">
+      {% set co = tool.active_checkout %}
+      {% if co %}
+        {% set now = namespace() %}
+        <div class="alert alert-warning d-flex align-items-start gap-3" id="checkoutAlert" data-due-at="{{ co.due_at.isoformat() }}">
+          <div class="flex-grow-1">
+            <h5 class="alert-heading mb-1">
+              <i class="bi bi-person-check"></i> Checked Out
+            </h5>
+            <p class="mb-1">
+              Borrowed by <strong>{{ co.borrower_name }}</strong>
+              {% if co.borrower_email %} · <a href="mailto:{{ co.borrower_email }}">{{ co.borrower_email }}</a>{% endif %}
+              {% if co.borrower_phone %} · {{ co.borrower_phone }}{% endif %}
+            </p>
+            <p class="mb-1">
+              Due: <strong>{{ co.due_at.strftime('%b %d, %Y') }}</strong>
+              &nbsp;<span class="countdown-badge badge bg-warning text-dark"
+                    data-due-at="{{ co.due_at.isoformat() }}">Loading…</span>
+            </p>
+            {% if co.notes %}<p class="mb-0 small text-muted">Notes: {{ co.notes }}</p>{% endif %}
+          </div>
+          <form method="POST" action="{{ url_for('lending.return_tool', checkout_id=co.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success btn-sm">
+              <i class="bi bi-check2-circle"></i> Mark Returned
+            </button>
+          </form>
+        </div>
+
+        <!-- Reserve section -->
+        <div class="card border-info mb-3" id="reserveSection">
+          <div class="card-body py-2">
+            <h6 class="mb-2"><i class="bi bi-calendar-plus"></i> Add to Wait List</h6>
+            <form method="POST" action="{{ url_for('lending.reserve', tool_id=tool.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-info btn-sm">
+                <i class="bi bi-bell"></i> Reserve — Notify Me When Available
+              </button>
+            </form>
+          </div>
+        </div>
+
+      {% else %}
+        <div class="alert alert-success d-flex align-items-center gap-3">
+          <div class="flex-grow-1">
+            <h5 class="alert-heading mb-0"><i class="bi bi-check-circle"></i> Available</h5>
+          </div>
+          <a href="{{ url_for('lending.checkout', tool_id=tool.id) }}" class="btn btn-success">
+            <i class="bi bi-box-arrow-up-right"></i> Check Out
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Pending reservations -->
+    {% if pending_reservations %}
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-list-ol"></i> Wait List ({{ pending_reservations|length }})
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for res in pending_reservations %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>#{{ loop.index }}</strong>
+            {% if res.user %}{{ res.user.display_name }}{% elif res.guest_name %}{{ res.guest_name }} (guest){% endif %}
+            {% if res.status == 'notified' %}<span class="badge bg-info ms-1">Notified</span>{% endif %}
+            <span class="text-muted small ms-2">{{ res.created_at.strftime('%b %d') }}</span>
+          </div>
+          <form method="POST" action="{{ url_for('lending.cancel_reservation', res_id=res.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Checkout history -->
+{% if checkouts %}
+<div class="mt-4">
+  <h5>Checkout History</h5>
+  <div class="accordion" id="checkoutAccordion">
+    {% for co in checkouts %}
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button"
+                data-bs-toggle="collapse" data-bs-target="#co{{ co.id }}">
+          <div class="d-flex gap-3 align-items-center w-100 me-3">
+            <span><strong>{{ co.borrower_name }}</strong></span>
+            <span class="text-muted small">{{ co.checked_out_at.strftime('%b %d, %Y') }}</span>
+            {% if co.returned_at %}
+              <span class="badge bg-success ms-auto">Returned {{ co.returned_at.strftime('%b %d') }}</span>
+            {% else %}
+              <span class="badge bg-warning text-dark ms-auto">Active</span>
+            {% endif %}
+          </div>
+        </button>
+      </h2>
+      <div id="co{{ co.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}">
+        <div class="accordion-body small">
+          <p><strong>Email:</strong> {{ co.borrower_email or '—' }} &nbsp; <strong>Phone:</strong> {{ co.borrower_phone or '—' }}</p>
+          <p><strong>Checked out:</strong> {{ co.checked_out_at.strftime('%b %d, %Y %H:%M') }}
+             &nbsp; <strong>Due:</strong> {{ co.due_at.strftime('%b %d, %Y') }}
+             &nbsp; <strong>Duration:</strong> {{ co.checkout_duration_days }} days</p>
+          {% if co.notes %}<p><strong>Notes:</strong> {{ co.notes }}</p>{% endif %}
+          {% if co.returned_at %}<p><strong>Returned:</strong> {{ co.returned_at.strftime('%b %d, %Y %H:%M') }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{{ owner.display_name }}'s Tool Library — Dowel{% endblock %}
+{% block content %}
+
+<div class="text-center mb-4">
+  <h2>🔧 {{ owner.display_name or owner.username }}'s Tool Library</h2>
+  <p class="text-muted">Browse available tools and request to borrow one.</p>
+</div>
+
+<!-- Filter bar -->
+<div class="card mb-4 shadow-sm">
+  <div class="card-body py-2">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search tools…">
+      </div>
+      <div class="col-md-5">
+        <div class="d-flex flex-wrap gap-1" id="categoryPills">
+          <button class="btn btn-sm btn-dark active" data-category="all">All</button>
+          {% for cat in categories %}
+          <button class="btn btn-sm btn-outline-secondary" data-category="{{ cat.id }}">
+            {{ cat.icon }} {{ cat.name }}
+          </button>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="btn-group w-100" role="group" id="availabilityFilter">
+          <button type="button" class="btn btn-sm btn-outline-secondary active" data-avail="all">All</button>
+          <button type="button" class="btn btn-sm btn-outline-success" data-avail="available">Available</button>
+          <button type="button" class="btn btn-sm btn-outline-warning" data-avail="checkedout">Checked Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if tools %}
+<div class="row g-3" id="toolGrid">
+  {% for tool in tools %}
+  {% set co = tool.active_checkout %}
+  <div class="col-md-4 tool-card"
+       data-name="{{ tool.name|lower }} {{ (tool.brand or '')|lower }}"
+       data-category="{{ tool.category_id or '' }}"
+       data-available="{{ 'true' if tool.is_available else 'false' }}">
+    <div class="card h-100 shadow-sm">
+      {% if tool.image_filename %}
+      <img src="{{ url_for('static', filename='uploads/' + tool.image_filename) }}"
+           class="card-img-top tool-thumb" alt="{{ tool.name }}">
+      {% else %}
+      <div class="tool-thumb-placeholder d-flex align-items-center justify-content-center bg-light">
+        <span style="font-size:3rem">🔧</span>
+      </div>
+      {% endif %}
+      <div class="card-body">
+        <h6 class="card-title mb-1 fw-bold">{{ tool.name }}</h6>
+        {% if tool.brand %}
+        <p class="text-muted small mb-2">{{ tool.brand }}{% if tool.model_number %} · {{ tool.model_number }}{% endif %}</p>
+        {% endif %}
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {% if tool.category %}
+          <span class="badge bg-secondary">{{ tool.category.icon }} {{ tool.category.name }}</span>
+          {% endif %}
+          {% if tool.is_available %}
+          <span class="badge bg-success">Available</span>
+          {% else %}
+          <span class="badge bg-warning text-dark countdown-badge" data-due-at="{{ co.due_at.isoformat() }}">Checked Out</span>
+          {% endif %}
+          <span class="badge bg-light text-dark border">{{ tool.condition|title }}</span>
+        </div>
+
+        {% if tool.description %}
+        <p class="small text-muted mb-3">{{ tool.description[:100] }}{% if tool.description|length > 100 %}…{% endif %}</p>
+        {% endif %}
+
+        <!-- Request to Borrow -->
+        <button type="button"
+                class="btn btn-sm {% if tool.is_available %}btn-success{% else %}btn-outline-warning{% endif %} w-100"
+                data-bs-toggle="modal"
+                data-bs-target="#reserveModal"
+                data-tool-id="{{ tool.id }}"
+                data-tool-name="{{ tool.name }}"
+                data-available="{{ tool.is_available|lower }}">
+          {% if tool.is_available %}
+          <i class="bi bi-hand-thumbs-up"></i> Request to Borrow
+          {% else %}
+          <i class="bi bi-bell"></i> Join Wait List
+          {% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<p class="text-muted mt-3 small" id="noResults" style="display:none">No tools match your filter.</p>
+{% else %}
+<div class="text-center py-5">
+  <p class="fs-1">🔧</p>
+  <h4 class="text-muted">No tools in this library yet.</h4>
+</div>
+{% endif %}
+
+<!-- Reserve Modal -->
+<div class="modal fade" id="reserveModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reserveModalTitle">Request to Borrow</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="reserveForm" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <p class="text-muted" id="reserveModalDesc"></p>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Your Name <span class="text-danger">*</span></label>
+            <input type="text" name="guest_name" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Your Email <span class="text-danger">*</span></label>
+            <input type="email" name="guest_email" class="form-control" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="reserveSubmitBtn">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set modal action and labels based on clicked tool
+document.getElementById('reserveModal').addEventListener('show.bs.modal', function(event) {
+  const btn = event.relatedTarget;
+  const toolId = btn.getAttribute('data-tool-id');
+  const toolName = btn.getAttribute('data-tool-name');
+  const available = btn.getAttribute('data-available') === 'true';
+
+  document.getElementById('reserveModalTitle').textContent =
+    available ? 'Request to Borrow: ' + toolName : 'Join Wait List: ' + toolName;
+  document.getElementById('reserveModalDesc').textContent =
+    available
+      ? 'Fill in your details and the owner will be in touch.'
+      : 'This tool is currently checked out. Add yourself to the wait list and you\'ll be notified when it\'s available.';
+  document.getElementById('reserveForm').action =
+    '/tools/share/{{ owner.share_token }}/reserve/' + toolId;
+  document.getElementById('reserveSubmitBtn').textContent =
+    available ? 'Submit Request' : 'Join Wait List';
+});
+</script>
+{% endblock %}

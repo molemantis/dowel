@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Environment / secrets — NEVER commit these
+.env
+.env.local
+.env.production
+*.env
+
+# Database — keep out of version control
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Uploaded user files
+app/static/uploads/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Claude Code
+.claude/
