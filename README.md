@@ -66,7 +66,7 @@ No fees. No transactions. Just friends, family, and neighbors helping each other
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+|:---|:---|
 | Backend | Python / Flask |
 | Database | SQLite (dev) / PostgreSQL (production) |
 | ORM | SQLAlchemy |
