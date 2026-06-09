@@ -24,6 +24,30 @@ No fees. No transactions. Just friends, family, and neighbors helping each other
 
 ---
 
+## Screenshots
+
+**Inventory Dashboard** — browse, search, and filter your tools with live availability badges
+
+![Inventory Dashboard](docs/screenshots/01_inventory.png)
+
+**Tool Detail — Available** — full specs, condition, and one-click checkout
+
+![Tool Detail Available](docs/screenshots/03_tool_detail_available.png)
+
+**Tool Detail — Checked Out** — live countdown showing time remaining
+
+![Tool Detail Checked Out](docs/screenshots/02_tool_detail_checkedout.png)
+
+**Checkout Form** — log who borrowed it, for how long, and any notes
+
+![Checkout Form](docs/screenshots/04_checkout.png)
+
+**Add a Tool** — search Home Depot / Lowes to auto-fill, or enter manually
+
+![Add Tool](docs/screenshots/05_add_tool.png)
+
+---
+
 ## Features
 
 - 🔐 **Multi-user accounts** — each user manages their own inventory
@@ -118,7 +142,7 @@ dowel/
 
 ## Roadmap
 
-- [ ] **Rich product lookup** — pull real product titles, descriptions, specs, and images from Home Depot, Lowes, and Amazon by searching a model number or product name; auto-populate the tool form with live retailer data so users never have to type specs manually
+- [ ] **Retailer product lookup** — search by model number to auto-fill tool details and images from Home Depot, Lowes, and Amazon
 - [ ] Email notifications when a reserved tool becomes available
 - [ ] Push notifications for overdue checkouts
 - [ ] Mobile-first PWA support
